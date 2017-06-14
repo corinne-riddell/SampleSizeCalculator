@@ -13,45 +13,86 @@ MathJax.Hub.Config({
                }
                });"
   ),
-  titlePanel("Calculate sample size"),
+  titlePanel("Sample Size Calculator for Panel Studies"),
   
+  tabsetPanel(
+    tabPanel("Overview",
+             uiOutput("abstract")),
+    tabPanel("Calculator",
+             selectInput(inputId = "model", label = "Choose your model type:", 
+                         choices = c("Random-intercepts model", "Random-intercepts and random-slope model")),
+             uiOutput("formula"),
+             hr(),
+             fluidRow(
+               column(4,
+                      HTML(paste0("<b/>How many measurements, (m), do you have for each unit/individual?</b>")),
+                      numericInput(inputId = "num_within", 
+                                   label = NULL, 
+                                   value = 10, width = '80px'),
+                      tableOutput("fakeData")
+               ),
+               
+               column(4, 
+                      numericInput(inputId = "slope", 
+                                   label = HTML(paste0("<b/>What minimal slope, (", "\\beta", "), would you like to detect?</b>")), 
+                                   value = 1),
+                      plotOutput("slopeGraph", width = "200px", height = "200px")
+               ),
+               column(4,
+                      numericInput(inputId = "mean_sq_dist", 
+                                   label = HTML(paste0("<b/>What is the average squared distance between each subject's $X$'s and their mean, (MS_x)?</b>")), 
+                                   value = 1),
+                      plotOutput("spreadPlot", width = "200px", height = "200px")
+               )
+             ),
+             hr(),
+             fluidRow(
+               column(4, 
+                      HTML(paste0("<b/>What is the within-subject variance (", "(\\sigma^2_{residual})", ")?</b>")),
+                      numericInput(inputId = "var_within", label = NULL, value = 1)
+               ),
+               column(4, 
+                      conditionalPanel(condition = "input.model == 'Random-intercepts and random-slope model'",
+                                       numericInput(inputId = "var_sub",
+                                                    label = paste0("What is the variance subject-specific slopes (", '(\\sigma^2_{slopes})', "):"),
+                                                    value = 1))),
+               column(4, 
+                      HTML(paste0("<b/>Try adjusting the type I error rate and statistical power to see how this affects the required sample size:</b>")),
+                      sliderInput(inputId = "type1error", label = "Type I error rate ((\\%)):", value = 0.05, min = 0.001, max = 0.999),
+                      sliderInput(inputId = "power", label = "Power ((\\%)):", value = .80, min = 0.1, max = 0.999))
+             ),
+             hr(),
+             uiOutput("sampleSize")
+    )
   
-  selectInput(inputId = "model", label = "Choose your model type:", 
-              choices = c("Random-intercepts model", "Random-intercepts and random-slope model")),
-  uiOutput("formula"),
-  fluidRow(
-    column(6, HTML(paste0("<b/>How many measurements, (m), do you have for each unit/individual?</b>"))),
-    column(2, numericInput(inputId = "num_within", label = NULL, value = 10))
-  ),
-  fluidRow(
-    column(6, HTML(paste0("<b/>What minimal slope, (", "\\beta", "), would you like to detect?</b>"))),
-    column(2, numericInput(inputId = "slope", label = NULL, value = 1))    
-  ),
-  plotOutput("slopeGraph", width = "200px", height = "200px"),
-  fluidRow(
-    column(8, HTML(paste0("<b/>What is the average squared distance between each subject's $X$'s and their mean, (MS_x)?</b>"))),
-    column(2, numericInput(inputId = "mean_sq_dist", label = NULL, value = 1))  
-  ),
-  plotOutput("spreadPlot", width = "200px", height = "200px"),
-  uiOutput("describe.spread"),
-  fluidRow(
-    column(8, HTML(paste0("<b/>What is the within-subject variance (", "(\\sigma^2_{residual})", ")?</b>"))),
-    column(2, numericInput(inputId = "var_within", label = NULL, value = 1))  
-  ),
-         #numericInput(inputId = "var_within", label = paste0("Within-subject variance (", '\\sigma^2_{residual}', "):"), value = 1),
-         conditionalPanel(condition = "input.model == 'Random-intercepts and random-slope model'",
-                 numericInput(inputId = "var_sub", 
-                              label = paste0("Variance subject-specific slopes(", '\\sigma^2_{slopes}', "):"), 
-                              value = 1)),
-         HTML(paste0("<b/>Try adjusting the type I error rate and statistical power to see how this affects the required sample size:</b>")),
-         sliderInput(inputId = "type1error", label = "type I error rate:", value = 0.05, min = 0.001, max = 0.999),
-         sliderInput(inputId = "power", label = "Power (%):", value = .80, min = 0.1, max = 0.999),
-  uiOutput("sampleSize")
-
+  #  uiOutput("describe.spread"),
+  
+  #numericInput(inputId = "var_within", label = paste0("Within-subject variance (", '\\sigma^2_{residual}', "):"), value = 1),
+  
+  )
+  
 )
 
 server <- function(input, output) {
   
+   output$abstract <- renderUI({
+     HTML(
+     paste0("</br></br><b>Motivation</b></br>",
+            "Panel study designs are common in environmental epidemiology whereby repeated measurements are collected",
+            " from a panel of subjects to evaluate short-term within-subject changes in response variables over time.", 
+            " In planning such studies, questions of how many subjects to include and how many different exposure conditions",
+            " to measure are commonly asked at the design stage. In practice, these choices are constrained by budget, ",
+            "logistics, and participant burden, and must be carefully balanced against statistical considerations of precision",
+            " and power.",
+            "</br></br><b>Sample Size Calculator</b></br>", 
+            "This sample size calculator implements two formulae to provide sample size estimates for these settings.",
+            " More detailed information on the formulae used can be found in the published manuscript. To use the calculator",
+            " you will need five inputs: 1) the residual variance of the",
+            " responses; 2) the variance of the slopes; 3) the number of subjects; 4) the number of measurements/subject; and 5)",
+            " the within-subject range of the exposure values “X” at which the responses are measured.")
+     )
+     })
+   
    output$formula<- renderUI({
     withMathJax(helpText("The formula for a ", input$model, " is:", 
                          ifelse(input$model == "Random-intercepts model", 
@@ -70,6 +111,19 @@ server <- function(input, output) {
 
    })
    
+   output$fakeData = renderTable({
+     
+     if(input$num_within <= 5){
+       unit <- rep("A", input$num_within)
+       measure <- 1:input$num_within
+     } else{
+       unit <- rep("A", 5)
+       measure <- c(1:3, "...", input$num_within)
+     }
+     
+     return(data.frame(unit, measure))
+   })
+   
    data.slope = reactive({
      data.frame(y = c(0, input$slope), x = c(0, 1))
    })
@@ -80,18 +134,14 @@ server <- function(input, output) {
        geom_area(alpha = 0.5, col = "blue") +
        coord_fixed(ratio = 1) +
        theme_minimal() + ggtitle("Slope to detect")
-               #scale_y_continuous(limits = c(0, max(1, input$slope))) + 
-               #scale_x_continuous(limits = c(0, max(1, input$slope)))
      
      if(input$slope > 0 & input$slope <= 1){
        plot <- plot + scale_y_continuous(limits = c(0, 1)) 
-     } else if(input$slope > 1){#else{
-       #plot <- plot + scale_x_continuous(breaks = c(0, 1), labels = c(0, 1))
+     } else if(input$slope > 1){
        plot <- plot + scale_y_continuous(limits = c(0, input$slope)) + scale_x_continuous(limits = c(0, input$slope))
      } else if(input$slope < 0){
        plot <- plot + scale_y_continuous(limits = c(input$slope, 0)) + scale_x_continuous(limits = c(0, -input$slope))
      }
-     
      
      return(plot)
    })
@@ -102,11 +152,9 @@ server <- function(input, output) {
    })
      
    output$spreadPlot <- renderPlot({
-     #p1 <- ggplot(data = values(), aes(x = v1, y = y)) + geom_point(alpha = 0.5, shape = 4) + geom_point(aes(x = mean(values()$v1), y = 0), col = "red")
      p2 <- ggplot(data = values(), aes(x = v1)) + geom_histogram(alpha = 0.5, col = "green", fill = "green", binwidth = input$mean_sq_dist/2) +
        geom_vline(aes(xintercept = mean(values()$v1)), col = "red") + theme_minimal() + geom_rug(alpha = 0.5)
      p2 + ggtitle("Histogram of subject\nmeasurements") + xlab("measurements (X's)")
-     #return(subplot(ggplotly(p1), ggplotly(p2), nrows = 1))
    })
    # 
    # output$describe.spread <- renderUI({
@@ -119,16 +167,16 @@ server <- function(input, output) {
    sample.size <- reactive({
      if(input$model == "Random-intercepts model"){
        #formula for random intercepts model
-       n <- ((qnorm(p = (1-input$type1error/2)) + qnorm(input$power))^2/input$slope^2)*(input$var_within/input$num_within*input$mean_sq_dist)
+       n <- ((qnorm(p = (1-input$type1error/2)) + qnorm(input$power))^2/input$slope^2)*(input$var_within/(input$num_within*input$mean_sq_dist))
      } else{
        #formula for random intercepts and slope model
-       n <- ((qnorm(p = (1-input$type1error/2)) + qnorm(input$power))^2/input$slope^2)*(input$var_sub + (input$var_within/input$num_within*input$mean_sq_dist))
+       n <- ((qnorm(p = (1-input$type1error/2)) + qnorm(input$power))^2/input$slope^2)*(input$var_sub + (input$var_within/(input$num_within*input$mean_sq_dist)))
      }
      
    }) 
    
    output$sampleSize <- renderUI({
-     HTML(paste0("The sample size required is: ", sample.size()))
+     HTML(paste0("<h3>The sample size required is: ", round(sample.size(), 1), "</h1>"))
    })
    
 }
