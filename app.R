@@ -13,7 +13,7 @@ MathJax.Hub.Config({
                }
                });"
   ),
-  titlePanel("Sample Size Calculator for Panel Studies"),
+  titlePanel("Sample Size Calculator for Panel Studies with Repeated Measurements"),
   
   tabsetPanel(
     tabPanel("Overview",
