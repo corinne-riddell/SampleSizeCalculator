@@ -39,10 +39,13 @@ MathJax.Hub.Config({
                       plotOutput("slopeGraph", width = "200px", height = "200px")
                ),
                column(4,
+                      numericInput(inputId = "mean_X",
+                                   label = "What is the overall mean $X$?",
+                                   value = 10),
                       numericInput(inputId = "mean_sq_dist", 
                                    label = HTML(paste0("<b/>What is the average squared distance between each subject's $X$'s and their mean, (MS_x)?</b>")), 
                                    value = 1),
-                      plotOutput("spreadPlot", width = "200px", height = "200px")
+                      uiOutput("spreadPlot")
                )
              ),
              hr(),
@@ -135,26 +138,47 @@ server <- function(input, output) {
        coord_fixed(ratio = 1) +
        theme_minimal() + ggtitle("Slope to detect")
      
-     if(input$slope > 0 & input$slope <= 1){
+     if(input$slope > 0 & input$slope <= 1){ #slope is a positive fraction or 1
        plot <- plot + scale_y_continuous(limits = c(0, 1)) 
-     } else if(input$slope > 1){
+     } else if(input$slope > 1){ #slope larger than 1
        plot <- plot + scale_y_continuous(limits = c(0, input$slope)) + scale_x_continuous(limits = c(0, input$slope))
-     } else if(input$slope < 0){
+     } else if(input$slope < -1){ #slope smaller than -1
        plot <- plot + scale_y_continuous(limits = c(input$slope, 0)) + scale_x_continuous(limits = c(0, -input$slope))
+     } else if (input$slope >= -1 & input$slope <= 0){ #slope is a negative fraction or 0
+       plot <- plot + scale_y_continuous(limits = c(-1, 0)) 
      }
      
      return(plot)
    })
 
    values <- reactive({
-     v1 <- rnorm(n = input$num_within, mean = 10, sd = sqrt(input$mean_sq_dist))
+     v1 <- rnorm(n = input$num_within, mean = input$mean_X, sd = sqrt(input$mean_sq_dist))
      return(data.frame(v1 = v1, y = rep(0, input$num_within)))
    })
      
-   output$spreadPlot <- renderPlot({
-     p2 <- ggplot(data = values(), aes(x = v1)) + geom_histogram(alpha = 0.5, col = "green", fill = "green", binwidth = input$mean_sq_dist/2) +
-       geom_vline(aes(xintercept = mean(values()$v1)), col = "red") + theme_minimal() + geom_rug(alpha = 0.5)
-     p2 + ggtitle("Histogram of subject\nmeasurements") + xlab("measurements (X's)")
+   output$spreadPlot <- renderUI({ #set width and height dynamically based on the number measurements within 
+     plotOutput("spreadPlot2", width = ifelse(input$num_within >=20, "200px", "250px"), height = ifelse(input$num_within >= 20, "200px", "80px"))
+   })
+   
+   output$spreadPlot2 <- renderPlot({
+     if(input$num_within >= 20){
+     p2 <- ggplot(data = values(), aes(x = v1)) + 
+       geom_histogram(alpha = 0.5, col = "green", fill = "green", binwidth = input$mean_sq_dist/2) +
+       geom_vline(aes(xintercept = mean(values()$v1)), col = "red") + 
+       theme_minimal() + geom_rug(alpha = 0.5) +
+       ggtitle("Histogram of subject\nmeasurements") + 
+       xlab("measurements (X's)")
+     } else {
+     p2 <- ggplot(data = values(), aes(x = v1, y = 0)) +
+       geom_point(aes(x = mean(values()$v1), y = 0, col = "Mean X"), size = 2) +
+       geom_point(alpha = 0.5, shape = 4, size = 2) +
+       ggtitle("Sample of measurements") + 
+       xlab("measurements (X's)") + 
+       theme_bw() + ylab("") + theme(legend.title = element_blank()) +
+       scale_y_continuous(breaks = NULL)
+     }
+     
+     p2
    })
    # 
    # output$describe.spread <- renderUI({
