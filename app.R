@@ -13,7 +13,7 @@ MathJax.Hub.Config({
                }
                });"
   ),
-  titlePanel("Sample Size Calculator for Panel Studies with Repeated Measurements"),
+  titlePanel(title=div(img(src='mcgill_logo.jpg', align = "right"), "Sample Size Calculator for Panel Studies with Repeated Measurements")),
   
   tabsetPanel(
     tabPanel("Overview",
@@ -83,24 +83,27 @@ server <- function(input, output) {
      paste0("</br></br><b>Motivation</b></br>",
             "Panel study designs are common in environmental epidemiology whereby repeated measurements are collected",
             " from a panel of subjects to evaluate short-term within-subject changes in response variables over time.", 
-            " Examples include studies with repeated measurements of air pollution exposure and blood pressure or lung function.</b></br>",
-            " </b></br>In planning such studies, questions of how many subjects to include and how many different exposure conditions",
+            " Examples include studies with repeated measurements of air pollution exposure and blood pressure or lung function.<br/><br/>",
+            " In planning such studies, questions of how many subjects to include and how many different exposure conditions",
             " to measure are commonly asked at the design stage. In practice, these choices are constrained by budget, ",
             "logistics, and participant burden, and must be carefully balanced against statistical considerations of precision",
             " and power.",
             "</br></br><b>Sample Size Calculator</b></br>", 
             "This sample size calculator implements two formulae to provide sample size estimates for panel studies with repeated within-subject measurements.",
-            " A detailed description of these formulae can be found in our published manuscript (Epidemiology 2017;XX: XX).",
+            " A detailed description of these formulae can be found in our published manuscript (Forthcoming in <i>Epidemiology</i>).",
            "</b></br>",
            "</b></br>",
-            " To use the calculator, you will need to provide information for several inputs:</b></br>",
-            " <b>1)</b> The number of measurements per subject;</b></br>",
-            "<b>2)</b> The slope you wish to detect (i.e. how much do you expect the response to change per unit change in exposure?).</b></br>",
-            " <b>3)</b> The variance of subject-specific slopes (if a random-slope model is used);</b></br>",
-            " <b>4)</b> The residual variance of measured responses within-subjects;</b></br>",
-            " <b>5)</b> The within-subject range of the exposure values “X” at which the responses are measured;</b></br>",
-           "</br></br><b>Developer</b></br>",
-           " This online sample-size calculator was developed by Dr. Corinne Riddell."
+            " To use the calculator, you will need to provide information for several inputs:<br/>",
+            " <b>1)</b> The number of measurements per subject;<br/>",
+            "<b>2)</b> The slope you wish to detect, i.e. how much do you expect the response to change per unit change in exposure?.<br/>",
+            " <b>3)</b> The variance of subject-specific slopes, if a random-slope model is used;<br/>",
+            " <b>4)</b> The residual variance of measured responses within-subjects;<br/>",
+            " <b>5)</b> The within-subject range of the exposure values “X” at which the responses are measured;",
+           "</br></br><b>About Us</b></br>",
+           "This sample size calculator accompanies the forthcoming manuscript written by <a href='http://scottweichenthal.weebly.com/people.html'>Scott Weichenthal</a>,",
+           " <a href='http://jillbaumgartner.weebly.com/'>Jill Baumgartner</a>, and <a href='http://www.medicine.mcgill.ca/epidemiology/hanley/'>James Hanley</a>",
+           " of the McGill <a href = 'https://www.mcgill.ca/epi-biostat-occh/'>Department of Epidemiology, Biostatistics, and Occupational Health</a>.",
+           " This online sample-size calculator was developed by <a href='corinne-riddell.github.io'>Corinne Riddell</a>, a postdoctoral researcher in the Department."
            ))
      })
    
