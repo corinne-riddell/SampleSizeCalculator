@@ -13,7 +13,7 @@ MathJax.Hub.Config({
                }
                });"
   ),
-  titlePanel(title=div(img(src='mcgill_logo.jpg', align = "right"), "Sample Size Calculator for Panel Studies with Repeated Measurements")),
+  titlePanel(title=div(img(src='mcgill_logo.jpg', align = "right"), "Sample Size Calculator for Panel Studies with Repeated Measurements and Continuous Outcomes")),
   
   tabsetPanel(
     tabPanel("Overview",
@@ -33,18 +33,21 @@ MathJax.Hub.Config({
                ),
                
                column(4, 
+                      HTML(paste0("<b/>What minimal slope, (", "\\beta", "), would you like to detect?</b>")),
                       numericInput(inputId = "slope", 
-                                   label = HTML(paste0("<b/>What minimal slope, (", "\\beta", "), would you like to detect?</b>")), 
-                                   value = 1),
+                                   label = NULL, 
+                                   value = 1, width = '80px'),
                       plotOutput("slopeGraph", width = "200px", height = "200px")
                ),
                column(4,
+                      HTML("<b>What is the underlying mean $X$?</b>"),
                       numericInput(inputId = "mean_X",
-                                   label = "What is the overall mean $X$?",
-                                   value = 10),
+                                   label = NULL,
+                                   value = 10, width = '80px'),
+                      HTML(paste0("<b/>What is the average squared distance between each subject's $X$'s and their mean, (MS_x)?</b>")),
                       numericInput(inputId = "mean_sq_dist", 
-                                   label = HTML(paste0("<b/>What is the average squared distance between each subject's $X$'s and their mean, (MS_x)?</b>")), 
-                                   value = 1),
+                                   label = NULL, 
+                                   value = 1, width = '80px'),
                       uiOutput("spreadPlot")
                )
              ),
@@ -52,13 +55,14 @@ MathJax.Hub.Config({
              fluidRow(
                column(4, 
                       HTML(paste0("<b/>What is the within-subject variance (", "(\\sigma^2_{residual})", ")?</b>")),
-                      numericInput(inputId = "var_within", label = NULL, value = 1)
+                      numericInput(inputId = "var_within", label = NULL, value = 1, width = '80px')
                ),
                column(4, 
                       conditionalPanel(condition = "input.model == 'Random-intercepts and random-slope model'",
+                                       HTML(paste0("<b>What is the variance subject-specific slopes (", '(\\sigma^2_{slopes})', "):</b>")),
                                        numericInput(inputId = "var_sub",
-                                                    label = paste0("What is the variance subject-specific slopes (", '(\\sigma^2_{slopes})', "):"),
-                                                    value = 1))),
+                                                    label = NULL,
+                                                    value = 1, width = '80px'))),
                column(4, 
                       HTML(paste0("<b/>Try adjusting the type I error rate and statistical power to see how this affects the required sample size:</b>")),
                       sliderInput(inputId = "type1error", label = "Type I error rate ((\\%)):", value = 0.05, min = 0.001, max = 0.999),
@@ -95,7 +99,7 @@ server <- function(input, output) {
            "</b></br>",
             " To use the calculator, you will need to provide information for several inputs:<br/>",
             " <b>1)</b> The number of measurements per subject;<br/>",
-            "<b>2)</b> The slope you wish to detect, i.e. how much do you expect the response to change per unit change in exposure?.<br/>",
+            "<b>2)</b> The slope you wish to detect, i.e. how much do you expect the response to change per unit change in exposure?;<br/>",
             " <b>3)</b> The variance of subject-specific slopes, if a random-slope model is used;<br/>",
             " <b>4)</b> The residual variance of measured responses within-subjects;<br/>",
             " <b>5)</b> The within-subject range of the exposure values “X” at which the responses are measured;",
@@ -108,10 +112,12 @@ server <- function(input, output) {
      })
    
    output$formula<- renderUI({
+     type1err.str <- as.character(round(qnorm(p = (1-input$type1error/2)), 2))
+     power.str <- as.character(round(qnorm(p = input$power), 2))
     withMathJax(helpText("The formula for a ", input$model, " is:", 
                          ifelse(input$model == "Random-intercepts model", 
-                                "$$n = \\frac{(1.96 + 0.84)^2}{\\beta^2}\\cdot\\frac{\\sigma^2_{residual}}{m\\times{MS_x}}$$",
-                                "$$n = \\frac{(1.96 + 0.84)^2}{\\beta^2}\\cdot\\Big({\\sigma^2_{slopes} + \\frac{\\sigma^2_{residual}}{m\\times{MS_x}}}\\Big)$$"),
+                                paste0("$$n = \\frac{(", type1err.str, " +", power.str, ")^2}{\\beta^2}\\cdot\\frac{\\sigma^2_{residual}}{m\\times{MS_x}}$$"),
+                                paste0("$$n = \\frac{(", type1err.str, " +", power.str, ")^2}{\\beta^2}\\cdot\\Big({\\sigma^2_{slopes} + \\frac{\\sigma^2_{residual}}{m\\times{MS_x}}}\\Big)$$")),
                         "where $n$ is the number of subjects,", 
                         "$\\beta$ is the magnitude of the slope we wish to detect, 
                         $\\sigma^2_{residual}$ is the within-subject variance of the response measure",
@@ -181,7 +187,7 @@ server <- function(input, output) {
        xlab("measurements (X's)")
      } else {
      p2 <- ggplot(data = values(), aes(x = v1, y = 0)) +
-       geom_point(aes(x = mean(values()$v1), y = 0, col = "Mean X"), size = 2) +
+       geom_point(aes(x = mean(values()$v1), y = 0, col = "Sampled mean"), size = 2) +
        geom_point(alpha = 0.5, shape = 4, size = 2) +
        ggtitle("Sample of measurements") + 
        xlab("measurements (X's)") + 
