@@ -19,9 +19,19 @@ MathJax.Hub.Config({
     tabPanel("Overview",
              uiOutput("abstract")),
     tabPanel("Calculator",
+             #fluidRow(
+             #column(6,
              selectInput(inputId = "model", label = "Choose your model type:", 
                          choices = c("Random-intercepts model", "Random-intercepts and random-slope model")),
+             #),
+            # column(6,
+             #       checkboxInput(inputId = "see_ex", label = "Show me an example from environmental science.")
+            #        )
+             #),
+             #hr(),
              uiOutput("formula"),
+             checkboxInput(inputId = "see_ex", label = "Show me an example."),
+             uiOutput("conditional_example"),
              hr(),
              fluidRow(
                column(4,
@@ -36,7 +46,7 @@ MathJax.Hub.Config({
                       HTML(paste0("<b/>What minimal slope, (", "\\beta", "), would you like to detect?</b>")),
                       numericInput(inputId = "slope", 
                                    label = NULL, 
-                                   value = 1, width = '80px'),
+                                   value = 1, width = '100px'),
                       plotOutput("slopeGraph", width = "200px", height = "200px")
                ),
                column(4,
@@ -59,10 +69,10 @@ MathJax.Hub.Config({
                ),
                column(4, 
                       conditionalPanel(condition = "input.model == 'Random-intercepts and random-slope model'",
-                                       HTML(paste0("<b>What is the variance subject-specific slopes (", '(\\sigma^2_{slopes})', "):</b>")),
+                                       HTML(paste0("<b>What is the variance of subject-specific slopes (", '(\\sigma^2_{slopes})', "):</b>")),
                                        numericInput(inputId = "var_sub",
                                                     label = NULL,
-                                                    value = 1, width = '80px'))),
+                                                    value = 1, width = '100px'))),
                column(4, 
                       HTML(paste0("<b/>Try adjusting the type I error rate and statistical power to see how this affects the required sample size:</b>")),
                       sliderInput(inputId = "type1error", label = "Type I error rate ((\\%)):", value = 0.05, min = 0.001, max = 0.999),
@@ -80,7 +90,52 @@ MathJax.Hub.Config({
   
 )
 
-server <- function(input, output) {
+server <- function(input, output, session) {
+  
+  observe({
+    if(input$model == "Random-intercepts model"){
+      if(input$see_ex == T){
+        num_within_ex <- 3
+        slope_ex <- -0.0025
+        mean_sq_dist_ex <- 500
+        var_within_ex <- 0.048
+        
+      } else{
+        num_within_ex <- 10
+        slope_ex <- 1
+        mean_sq_dist_ex <- 1
+        var_within_ex <- 1
+      }
+      
+      updateNumericInput(session, "num_within", value = num_within_ex)
+      updateNumericInput(session, "slope", value = slope_ex)
+      updateNumericInput(session, "mean_sq_dist", value = mean_sq_dist_ex)
+      updateNumericInput(session, "var_within", value = var_within_ex)
+    }else{
+      if(input$see_ex == T){
+        num_within_ex <- 3
+        slope_ex <- -0.0025
+        mean_sq_dist_ex <- 500
+        var_within_ex <- 0.048
+        var_sub_ex <- 0.0001
+        
+      } else{
+        num_within_ex <- 10
+        slope_ex <- 1
+        mean_sq_dist_ex <- 1
+        var_within_ex <- 1
+        var_sub_ex <- 1
+      }
+      
+      updateNumericInput(session, "num_within", value = num_within_ex)
+      updateNumericInput(session, "slope", value = slope_ex)
+      updateNumericInput(session, "mean_sq_dist", value = mean_sq_dist_ex)
+      updateNumericInput(session, "var_within", value = var_within_ex)    
+      updateNumericInput(session, "var_sub", value = var_sub_ex) 
+    }
+  
+    })
+  
   
    output$abstract <- renderUI({
      HTML(
@@ -126,9 +181,29 @@ server <- function(input, output) {
                                "$\\sigma^2_{slopes}$ is the variance of subject-specific slopes,"), 
                         "$m$ is the number of within-subject measurements, and",
                         "$MS_x$ is the mean squared distance betwen the subject's $X$'s and their mean.",
-                        "Below, we set each of the required parameters to calculate the required sample size."))
+                        "Below, set each of the required parameters to calculate the required sample size."))
      # HTML(paste0("The sample size required is: ", sample.size()))
 
+   })
+   
+   output$conditional_example <- renderUI({
+     if(input$see_ex){
+       if(input$model == "Random-intercepts model"){
+       HTML(paste0("Consider a hypothetical study of exposure to ultra-fine particle (UFP) and changes in the reactive hyperemia index (RHI).",
+                   " Assume that we could take three measurements per person, and that we would like to detect a slope of -0.0025 per 1000 UFPs.",
+                   " Also assume that the average squared distance between each person's three measurements and <i>their</i> mean measurement is ",
+                   " 500. Lastly, assume that the residual variance is 0.219<sup>2</sup> which is approximately equal to 0.048. Then, we would need to have",
+                   " a sample size of 40 people to detect the indicated slope with a type I error rate of 95% and 80% power."))
+       }else{
+         HTML(paste0("Consider a hypothetical study of exposure to ultra-fine particle (UFP) and changes in the reactive hyperemia index (RHI).",
+                     " Assume that we could take three measurements per person, and that we would like to detect a slope of -0.0025 per 1000 UFPs.",
+                     " Also assume that the average squared distance between each person's three measurements and <i>their</i> mean measurement is ",
+                     " 500, and that the residual variance is 0.219<sup>2</sup> which is approximately equal to 0.048.",
+                     " Finally, assume that the variance between the subject-specific slopes is 0.0001. Then, we would need to have",
+                     " a sample size of 166 people to detect the indicated slope with a type I error rate of 95% and 80% power."))
+       }
+     }
+         
    })
    
    output$fakeData = renderTable({
