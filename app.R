@@ -58,7 +58,8 @@ MathJax.Hub.Config({
                       numericInput(inputId = "mean_sq_dist", 
                                    label = NULL, 
                                    value = 1, width = '80px'),
-                      uiOutput("spreadPlot")
+                      uiOutput("spreadPlot"),
+                      uiOutput("describe.spread")
                )
              ),
              hr(),
@@ -82,7 +83,7 @@ MathJax.Hub.Config({
              uiOutput("sampleSize")
     )
   
-  #  uiOutput("describe.spread"),
+  
   
   #numericInput(inputId = "var_within", label = paste0("Within-subject variance (", '\\sigma^2_{residual}', "):"), value = 1),
   
@@ -255,7 +256,7 @@ server <- function(input, output, session) {
    output$spreadPlot2 <- renderPlot({
      if(input$num_within >= 20){
      p2 <- ggplot(data = values(), aes(x = v1)) + 
-       geom_histogram(alpha = 0.5, col = "green", fill = "green", binwidth = input$mean_sq_dist/2) +
+       geom_histogram(alpha = 0.5, col = "green", fill = "green", bins = input$num_within/5) +
        geom_vline(aes(xintercept = mean(values()$v1)), col = "red") + 
        theme_minimal() + geom_rug(alpha = 0.5) +
        ggtitle("Histogram of subject\nmeasurements") + 
@@ -272,13 +273,13 @@ server <- function(input, output, session) {
      
      p2
    })
-   # 
-   # output$describe.spread <- renderUI({
-   #   HTML(paste0("The underlying mean is 10. The empirical mean is ", round(mean(values()$v1), 1), ".<br/><br/>",
-   #               "The average mean distance between the Xi's and 10 is: ", round(mean((values()$v1 - 10)^2), 1), ".<br/><br/>",
-   #               "The average mean distance between the Xi's and the empirical mean is: ", round(mean((values()$v1 - mean(values()$v1))^2), 1)))
-   #   
-   # })
+
+   output$describe.spread <- renderUI({
+     HTML(paste0("The underlying mean is ", input$mean_X, ". The empirical mean is ", round(mean(values()$v1), 1), ".<br/><br/>",
+                 "The average mean distance between the Xi's and ", input$mean_X, " is: ", round(mean((values()$v1 - input$mean_X)^2), 1), ".<br/><br/>",
+                 "The average mean distance between the Xi's and the empirical mean is: ", round(mean((values()$v1 - mean(values()$v1))^2), 1)))
+
+   })
    
    sample.size <- reactive({
      if(input$model == "Random-intercepts model"){
