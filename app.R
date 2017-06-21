@@ -58,8 +58,8 @@ MathJax.Hub.Config({
                       numericInput(inputId = "mean_sq_dist", 
                                    label = NULL, 
                                    value = 1, width = '80px'),
-                      uiOutput("spreadPlot"),
-                      uiOutput("describe.spread")
+                      uiOutput("spreadPlot")#,
+                      #uiOutput("describe.spread")
                )
              ),
              hr(),
@@ -274,12 +274,12 @@ server <- function(input, output, session) {
      p2
    })
 
-   output$describe.spread <- renderUI({
-     HTML(paste0("The underlying mean is ", input$mean_X, ". The empirical mean is ", round(mean(values()$v1), 1), ".<br/><br/>",
-                 "The average mean distance between the Xi's and ", input$mean_X, " is: ", round(mean((values()$v1 - input$mean_X)^2), 1), ".<br/><br/>",
-                 "The average mean distance between the Xi's and the empirical mean is: ", round(mean((values()$v1 - mean(values()$v1))^2), 1)))
-
-   })
+   # output$describe.spread <- renderUI({
+   #   HTML(paste0("The underlying mean is ", input$mean_X, ". The empirical mean is ", round(mean(values()$v1), 1), ".<br/><br/>",
+   #               "The average mean distance between the Xi's and ", input$mean_X, " is: ", round(mean((values()$v1 - input$mean_X)^2), 1), ".<br/><br/>",
+   #               "The average mean distance between the Xi's and the empirical mean is: ", round(mean((values()$v1 - mean(values()$v1))^2), 1)))
+   # 
+   # })
    
    sample.size <- reactive({
      if(input$model == "Random-intercepts model"){
