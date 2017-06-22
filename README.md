@@ -1,6 +1,6 @@
-# SampleSizeCalculator
+# Sample Size Calculator for Repeated Measurements Analysis with Continuous Outcomes
 
-This repo contains the R Code for an R Shiny web application that calculates sample size for repeated measures analysis (i.e., panel studies) when the response variable is a continuous measure. 
+This repo contains the R Code for an R Shiny web application that calculates sample size for repeated measurements analysis (i.e., panel studies) when the response variable is a continuous measure. 
 
 It accompanies a forthcoming paper in *Epidemiology* written by Scott Weichenthal, Jill Baumgartner, and James Hanley of the McGill Department of Epidemiology, Biostatistics, and Occupational Health. 
 
