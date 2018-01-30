@@ -2,7 +2,7 @@
 
 This repo contains the R Code for an R Shiny web application that calculates sample size for repeated measurements analysis (i.e., panel studies) when the response variable is a continuous measure. 
 
-It accompanies a forthcoming paper in *Epidemiology* written by Scott Weichenthal, Jill Baumgartner, and James Hanley of the McGill Department of Epidemiology, Biostatistics, and Occupational Health. 
+It accompanies the [paper](https://journals.lww.com/epidem/Citation/2017/11000/Sample_Size_Estimation_for_Random_effects_Models_.9.aspx)  "Sample Size Estimation for Random-effects Models: Balancing Precision and Feasibility in Panel Studies" in *Epidemiology* written by Scott Weichenthal, Jill Baumgartner, and James Hanley of the McGill Department of Epidemiology, Biostatistics, and Occupational Health. 
 
 We welcome any contributions you might have! Specifically, it as my first time using observe() in Shiny and I know I'm not using it efficiently... this section of code could definitely benefit from a Shiny developer's eye! Also, I used MathJax to get the formulas to show up but then had trouble later with rendering brackets around prose. I definitely need a better way of writing text and formulas that avoids this issue.
 
